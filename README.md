@@ -5,6 +5,7 @@ Tech Tracker is a lightweight financial analytics dashboard built with **Python,
 It fetches real market data and provides **interactive visualizations for major technology companies**, enabling users to analyze price trends, moving averages, and return distributions.
 
 The application demonstrates how financial data can be processed on the backend and visualized through an interactive web interface.
+The frontend of this project was made using A.I tools.
 
 ---
 
