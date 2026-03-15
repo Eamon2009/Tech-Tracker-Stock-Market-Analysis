@@ -1,91 +1,67 @@
 import yfinance as yf
 import pandas as pd
-import requests
 from flask import Flask, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-TICKERS = {
-    "NVDA":"nvidia.com",
-    "MSFT":"microsoft.com",
-    "GOOGL":"google.com",
-    "AAPL":"apple.com"
+COMPANIES = {
+    "AAPL": {
+        "name": "Apple",
+        "logo": "https://logo.clearbit.com/apple.com"
+    },
+    "MSFT": {
+        "name": "Microsoft",
+        "logo": "https://logo.clearbit.com/microsoft.com"
+    },
+    "GOOGL": {
+        "name": "Google",
+        "logo": "https://logo.clearbit.com/google.com"
+    },
+    "NVDA": {
+        "name": "NVIDIA",
+        "logo": "https://logo.clearbit.com/nvidia.com"
+    }
 }
-
-def get_news():
-
-    url = "https://news.google.com/rss/search?q=stock+market"
-
-    r = requests.get(url)
-
-    import xml.etree.ElementTree as ET
-
-    root = ET.fromstring(r.content)
-
-    items = []
-
-    for item in root.findall(".//item")[:6]:
-
-        items.append({
-            "title":item.find("title").text,
-            "link":item.find("link").text
-        })
-
-    return items
-
 
 @app.route("/api/stocks")
 def stocks():
 
-    tickers = list(TICKERS.keys())
+    tickers = list(COMPANIES.keys())
 
-    df = yf.download(tickers,period="5y")
+    df = yf.download(
+    tickers,
+    period="5y",
+    interval="1d",
+    group_by="ticker",
+    auto_adjust=True
+)
 
     close = df["Close"].fillna(method="ffill")
-
-    returns = close.pct_change().dropna()
 
     ma50 = close.rolling(50).mean()
     ma200 = close.rolling(200).mean()
 
+    returns = close.pct_change().dropna()
+
     payload = {
-
-        "dates":close.index.strftime("%Y-%m-%d").tolist(),
-
-        "prices":{
-            t:close[t].tolist()
-            for t in tickers
-        },
-
-        "ma50":{
-            t:ma50[t].fillna(0).tolist()
-            for t in tickers
-        },
-
-        "ma200":{
-            t:ma200[t].fillna(0).tolist()
-            for t in tickers
-        },
-
-        "histogram":{
-            t:returns[t].tolist()
-            for t in tickers
-        },
-
-        "latest":close.iloc[-1].to_dict(),
-
-        "growth":((close.iloc[-1]-close.iloc[0])/close.iloc[0]*100).to_dict(),
-
-        "logos":TICKERS,
-
-        "news":get_news()
-
+        "dates": close.index.strftime("%Y-%m-%d").tolist(),
+        "companies": COMPANIES,
+        "prices": {},
+        "ma50": {},
+        "ma200": {},
+        "returns": {}
     }
+
+    for t in tickers:
+
+        payload["prices"][t] = close[t].tolist()
+        payload["ma50"][t] = ma50[t].fillna(None).tolist()
+        payload["ma200"][t] = ma200[t].fillna(None).tolist()
+        payload["returns"][t] = returns[t].tolist()
 
     return jsonify(payload)
 
-
-if __name__=="__main__":
-    app.run(port=5000,debug=True)
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)

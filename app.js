@@ -1,107 +1,108 @@
-async function initDashboard() {
+let DATA
+let chart
 
-       const response = await fetch("http://localhost:5000/api/stocks")
+async function init() {
 
-       const data = await response.json()
+       const res = await fetch("http://localhost:5000/api/stocks")
 
+       DATA = await res.json()
 
-       const colors = [
-              "#10b981",
-              "#3b82f6",
-              "#f59e0b",
-              "#ef4444",
-              "#8b5cf6"
-       ]
+       buildCompanyList()
 
-
-       createCards(data)
-
-       createLineChart(data)
-
-       createPieChart(data)
-
-       createBarChart(data)
+       showUnified()
 
 }
 
+function buildCompanyList() {
 
+       const container = document.getElementById("companyList")
 
-function createCards(data) {
+       Object.entries(DATA.companies).forEach(([ticker, info]) => {
 
-       const container = document.getElementById("tickerCards")
+              container.innerHTML += `
 
-       container.innerHTML = ""
+<div onclick="showSingle('${ticker}')"
+class="flex items-center gap-3 mb-4 cursor-pointer hover:bg-gray-900 p-2 rounded">
 
-       Object.entries(data.latest).forEach(([ticker, price]) => {
+<img src="${info.logo}" class="w-6">
 
-              const growth = data.growth[ticker]
+<div>${info.name}</div>
 
-              const color = growth > 0 ? "text-green-400" : "text-red-400"
-
-              container.innerHTML +=
-
-                     `<div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
-
-<div class="text-gray-400 text-xs">${ticker}</div>
-
-<div class="text-2xl font-bold">$${price.toFixed(2)}</div>
-
-<div class="${color}">
-${growth.toFixed(2)}%
 </div>
-
-</div>`
+`
 
        })
 
 }
 
 
+function showUnified() {
 
-function createLineChart(data) {
+       drawPriceChart(Object.keys(DATA.prices))
 
-       new Chart(document.getElementById("lineChart"), {
+       drawHistogram(Object.keys(DATA.returns)[0])
+
+}
+
+function showSingle(ticker) {
+
+       drawPriceChart([ticker])
+
+       drawHistogram(ticker)
+
+}
+
+
+function drawPriceChart(tickers) {
+
+       if (chart) chart.destroy()
+
+       const datasets = []
+
+       tickers.forEach(t => {
+
+              datasets.push({
+                     label: t,
+                     data: DATA.prices[t],
+                     borderColor: "#00ff9c",
+                     pointRadius: 0,
+                     borderWidth: 2
+              })
+
+              datasets.push({
+                     label: t + " MA50",
+                     data: DATA.ma50[t],
+                     borderColor: "#ffaa00",
+                     pointRadius: 0
+              })
+
+              datasets.push({
+                     label: t + " MA200",
+                     data: DATA.ma200[t],
+                     borderColor: "#ff4444",
+                     pointRadius: 0
+              })
+
+       })
+
+       chart = new Chart(document.getElementById("priceChart"), {
 
               type: "line",
 
               data: {
-
-                     labels: data.dates,
-
-                     datasets: Object.keys(data.prices).map((ticker, i) => ({
-
-                            label: ticker,
-
-                            data: data.prices[ticker],
-
-                            borderColor: [
-                                   "#10b981",
-                                   "#3b82f6",
-                                   "#f59e0b",
-                                   "#ef4444",
-                                   "#8b5cf6"
-                            ][i],
-
-                            borderWidth: 2,
-
-                            pointRadius: 0
-
-                     }))
-
+                     labels: DATA.dates,
+                     datasets: datasets
               },
 
               options: {
-
                      responsive: true,
-
+                     plugins: {
+                            legend: { labels: { color: "white" } }
+                     },
                      scales: {
-
                             x: { display: false },
-
-                            y: { grid: { color: "#1f2937" } }
-
+                            y: { grid: { color: "#222" } }
                      }
-
               }
 
        })
@@ -109,73 +110,23 @@ function createLineChart(data) {
 }
 
 
+function drawHistogram(ticker) {
 
-function createPieChart(data) {
-
-       new Chart(document.getElementById("pieChart"), {
-
-              type: "pie",
-
-              data: {
-
-                     labels: Object.keys(data.latest),
-
-                     datasets: [{
-
-                            data: Object.values(data.latest),
-
-                            backgroundColor: [
-                                   "#10b981",
-                                   "#3b82f6",
-                                   "#f59e0b",
-                                   "#ef4444",
-                                   "#8b5cf6"
-                            ]
-
-                     }]
-
-              }
-
-       })
-
-}
-
-
-
-function createBarChart(data) {
-
-       new Chart(document.getElementById("barChart"), {
+       new Chart(document.getElementById("histChart"), {
 
               type: "bar",
 
               data: {
-
-                     labels: Object.keys(data.growth),
-
+                     labels: DATA.returns[ticker].map((_, i) => i),
                      datasets: [{
-
-                            label: "5Y Growth %",
-
-                            data: Object.values(data.growth),
-
-                            backgroundColor: [
-                                   "#10b981",
-                                   "#3b82f6",
-                                   "#f59e0b",
-                                   "#ef4444",
-                                   "#8b5cf6"
-                            ]
-
+                            label: "Daily Returns",
+                            data: DATA.returns[ticker],
+                            backgroundColor: "#888"
                      }]
-
               }
 
        })
 
 }
 
-
-
-initDashboard()
-
-setInterval(initDashboard, 60000)
+init()
