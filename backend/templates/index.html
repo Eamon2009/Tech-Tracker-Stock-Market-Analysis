@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>TECH TRACKER | Financial Analytics</title>
+       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+       <style>
+              :root {
+                     --bg-dark: #050505;
+                     --bg-panel: #0a0a0a;
+                     --grid-color: #222222;
+                     --text-main: #eeeeee;
+                     --text-muted: #888888;
+              }
+
+              body {
+                     margin: 0;
+                     font-family: 'Segoe UI', Roboto, sans-serif;
+                     background-color: var(--bg-dark);
+                     color: var(--text-main);
+                     display: flex;
+                     height: 100vh;
+                     overflow: hidden;
+              }
+
+              /* Sidebar */
+              #sidebar {
+                     width: 280px;
+                     background-color: var(--bg-dark);
+                     border-right: 1px solid var(--grid-color);
+                     display: flex;
+                     flex-direction: column;
+              }
+
+              #sidebar h1 {
+                     font-size: 1rem;
+                     letter-spacing: 2px;
+                     padding: 25px 20px;
+                     margin: 0;
+                     border-bottom: 1px solid var(--grid-color);
+                     color: var(--text-muted);
+                     text-align: center;
+              }
+
+              .company-list {
+                     list-style: none;
+                     padding: 0;
+                     margin: 0;
+              }
+
+              .company-item {
+                     display: flex;
+                     align-items: center;
+                     justify-content: space-between;
+                     padding: 15px 20px;
+                     cursor: pointer;
+                     border-bottom: 1px solid #111;
+                     transition: background 0.2s;
+              }
+
+              .company-item:hover,
+              .company-item.active {
+                     background-color: #151515;
+              }
+
+              .company-info {
+                     display: flex;
+                     align-items: center;
+              }
+
+              .company-logo {
+                     width: 20px;
+                     height: 20px;
+                     margin-right: 12px;
+                     filter: grayscale(1) invert(1);
+              }
+
+              .company-name {
+                     font-weight: 500;
+                     font-size: 0.95rem;
+              }
+
+              .return-badge {
+                     font-size: 0.7rem;
+                     font-weight: 800;
+                     padding: 2px 6px;
+                     border-radius: 4px;
+                     min-width: 55px;
+                     text-align: center;
+              }
+
+              .return-badge.pos {
+                     background: rgba(0, 255, 136, 0.1);
+                     color: #00ff88;
+                     border: 1px solid rgba(0, 255, 136, 0.2);
+              }
+
+              .return-badge.neg {
+                     background: rgba(255, 68, 68, 0.1);
+                     color: #ff4444;
+                     border: 1px solid rgba(255, 68, 68, 0.2);
+              }
+
+              /* Main Content */
+              #main-content {
+                     flex-grow: 1;
+                     display: flex;
+                     flex-direction: column;
+                     padding: 20px 30px;
+                     overflow-y: auto;
+              }
+
+              .top-controls {
+                     display: flex;
+                     justify-content: space-between;
+                     align-items: center;
+                     margin-bottom: 20px;
+              }
+
+              .btn-group button {
+                     background-color: transparent;
+                     color: var(--text-muted);
+                     border: 1px solid var(--grid-color);
+                     padding: 8px 16px;
+                     cursor: pointer;
+                     font-size: 0.85rem;
+              }
+
+              .btn-group button.active {
+                     background-color: #222;
+                     color: var(--text-main);
+              }
+
+              .btn-group button:first-child {
+                     border-radius: 4px 0 0 4px;
+              }
+
+              .btn-group button:last-child {
+                     border-radius: 0 4px 4px 0;
+              }
+
+              .chart-container {
+                     background-color: var(--bg-dark);
+                     border: 1px solid var(--grid-color);
+                     border-radius: 4px;
+                     padding: 20px;
+                     margin-bottom: 20px;
+                     position: relative;
+              }
+
+              .price-chart-wrapper {
+                     height: 50vh;
+              }
+
+              .hist-chart-wrapper {
+                     height: 25vh;
+              }
+
+              #loading-overlay {
+                     position: absolute;
+                     top: 0;
+                     left: 0;
+                     right: 0;
+                     bottom: 0;
+                     background: var(--bg-dark);
+                     display: flex;
+                     justify-content: center;
+                     align-items: center;
+                     z-index: 10;
+                     color: var(--text-muted);
+              }
+       </style>
+</head>
+
+<body>
+
+       <div id="sidebar">
+              <h1>TECH TRACKER</h1>
+              <ul class="company-list" id="company-list"></ul>
+       </div>
+
+       <div id="main-content">
+              <div class="top-controls">
+                     <h2 id="view-title" style="font-weight: 400; margin: 0;">Market Intelligence</h2>
+                     <div class="btn-group">
+                            <button id="btn-unified" onclick="setMode('unified')">Unified View</button>
+                            <button id="btn-single" onclick="setMode('single')">Single Company</button>
+                     </div>
+              </div>
+
+              <div class="chart-container price-chart-wrapper">
+                     <div id="loading-overlay">Initializing Financial Data...</div>
+                     <canvas id="priceChart"></canvas>
+              </div>
+
+              <div class="chart-container hist-chart-wrapper" id="hist-container" style="display: none;">
+                     <canvas id="histChart"></canvas>
+              </div>
+       </div>
+
+       <script>
+              let stockData = null;
+              let currentMode = 'unified';
+              let currentTicker = 'AAPL';
+              let priceChartInst = null;
+              let histChartInst = null;
+
+              Chart.defaults.color = '#666';
+              const gridStyle = { color: '#151515', drawBorder: false };
+
+              async function init() {
+                     try {
+                            const res = await fetch('/api/stocks');
+                            stockData = await res.json();
+                            document.getElementById('loading-overlay').style.display = 'none';
+                            renderSidebar();
+                            setMode('unified');
+                     } catch (e) {
+                            document.getElementById('loading-overlay').innerText = "Connection Error";
+                     }
+              }
+
+              function renderSidebar() {
+                     const list = document.getElementById('company-list');
+                     list.innerHTML = '';
+                     Object.keys(stockData.companies).forEach(ticker => {
+                            const comp = stockData.companies[ticker];
+
+                            // Calculate Total Return % via JS
+                            const validPrices = comp.prices.filter(p => p !== null);
+                            const start = validPrices[0];
+                            const end = validPrices[validPrices.length - 1];
+                            const ret = ((end - start) / start * 100).toFixed(1);
+
+                            const li = document.createElement('li');
+                            li.className = 'company-item';
+                            li.id = `nav-${ticker}`;
+                            li.onclick = () => { currentTicker = ticker; setMode('single'); };
+                            li.innerHTML = `
+                    <div class="company-info">
+                        <img src="${comp.logo}" class="company-logo">
+                        <span class="company-name">${comp.name}</span>
+                    </div>
+                    <span class="return-badge ${ret >= 0 ? 'pos' : 'neg'}">${ret >= 0 ? '+' : ''}${ret}%</span>
+                `;
+                            list.appendChild(li);
+                     });
+              }
+
+              function setMode(mode) {
+                     currentMode = mode;
+                     document.getElementById('btn-unified').classList.toggle('active', mode === 'unified');
+                     document.getElementById('btn-single').classList.toggle('active', mode === 'single');
+                     document.querySelectorAll('.company-item').forEach(el => el.classList.remove('active'));
+
+                     if (mode === 'unified') {
+                            document.getElementById('view-title').innerText = "Competitor Comparison (5Y)";
+                            document.getElementById('hist-container').style.display = 'none';
+                            renderUnified();
+                     } else {
+                            const comp = stockData.companies[currentTicker];
+                            document.getElementById('view-title').innerText = `${comp.name} Analysis`;
+                            document.getElementById(`nav-${currentTicker}`).classList.add('active');
+                            document.getElementById('hist-container').style.display = 'block';
+                            renderSingle();
+                            renderHistogram();
+                     }
+              }
+
+              function renderUnified() {
+                     if (priceChartInst) priceChartInst.destroy();
+                     const datasets = Object.keys(stockData.companies).map(t => ({
+                            label: t,
+                            data: stockData.companies[t].prices,
+                            borderColor: stockData.companies[t].color,
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            tension: 0.1
+                     }));
+                     priceChartInst = new Chart(document.getElementById('priceChart'), {
+                            type: 'line',
+                            data: { labels: stockData.dates, datasets },
+                            options: getOptions("Price (USD)")
+                     });
+              }
+
+              function renderSingle() {
+                     if (priceChartInst) priceChartInst.destroy();
+                     const comp = stockData.companies[currentTicker];
+                     const datasets = [
+                            { label: 'Price', data: comp.prices, borderColor: comp.color, borderWidth: 2, pointRadius: 0 },
+                            { label: 'MA50', data: comp.ma50, borderColor: '#00d4ff', borderWidth: 1, borderDash: [5, 5], pointRadius: 0 },
+                            { label: 'MA200', data: comp.ma200, borderColor: '#ff00ff', borderWidth: 1, borderDash: [5, 5], pointRadius: 0 }
+                     ];
+                     priceChartInst = new Chart(document.getElementById('priceChart'), {
+                            type: 'line',
+                            data: { labels: stockData.dates, datasets },
+                            options: getOptions(`${comp.name} Price Action`)
+                     });
+              }
+
+              function renderHistogram() {
+                     if (histChartInst) histChartInst.destroy();
+                     const comp = stockData.companies[currentTicker];
+                     const returns = comp.returns.filter(r => r !== null);
+                     const bins = 40;
+                     const min = Math.min(...returns), max = Math.max(...returns);
+                     const step = (max - min) / bins;
+                     const counts = new Array(bins).fill(0);
+                     returns.forEach(r => { let i = Math.floor((r - min) / step); if (i >= bins) i = bins - 1; counts[i]++; });
+
+                     histChartInst = new Chart(document.getElementById('histChart'), {
+                            type: 'bar',
+                            data: {
+                                   labels: counts.map((_, i) => (min + i * step).toFixed(3)),
+                                   datasets: [{ data: counts, backgroundColor: comp.color + '44', borderColor: comp.color, borderWidth: 1 }]
+                            },
+                            options: {
+                                   maintainAspectRatio: false,
+                                   plugins: { legend: { display: false } },
+                                   scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } }, y: { grid: gridStyle } }
+                            }
+                     });
+              }
+
+              function getOptions(title) {
+                     return {
+                            maintainAspectRatio: false,
+                            interaction: { intersect: false, mode: 'index' },
+                            scales: { x: { grid: gridStyle, ticks: { maxTicksLimit: 12 } }, y: { grid: gridStyle } },
+                            plugins: { legend: { labels: { usePointStyle: true, boxWidth: 6 } } }
+                     };
+              }
+
+              init();
+       </script>
+</body>
+
+</html>
