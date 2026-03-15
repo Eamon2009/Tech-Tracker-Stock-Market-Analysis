@@ -1,179 +1,188 @@
-# Tech Tracker — Stock Market Analytics Dashboard
+# Tech Tracker — Stock Market Analysis Dashboard
 
-A dark-theme stock market analytics dashboard built with **Flask + Chart.js + Yahoo Finance data**.
-The application provides synchronized multi-company price analysis, moving averages, and return distributions using real financial data.
 
-The project focuses on clean visualization, reliable data alignment, and a terminal-style UI suitable for technical analysis.
+Tech Tracker is a lightweight financial analytics dashboard built with **Python, Flask, and Chart.js**.  
+It fetches real market data and provides **interactive visualizations for major technology companies**, enabling users to analyze price trends, moving averages, and return distributions.
+
+The application demonstrates how financial data can be processed on the backend and visualized through an interactive web interface.
 
 ---
 
 ## Overview
 
-Tech Tracker is a lightweight financial dashboard designed to visualize long-term stock performance for major technology companies.
+This project provides a simple **market intelligence dashboard** focused on major technology companies.
 
-The system fetches real market data using `yfinance`, processes it in a Flask backend, and renders interactive charts in the frontend using Chart.js.
+The system retrieves stock data, processes it using Python data analysis libraries, and presents the results through dynamic charts.
 
-The UI follows a minimal, high-contrast dark theme inspired by professional trading terminals.
+The dashboard currently tracks the following companies:
 
-Companies included:
+- Apple
+- Microsoft
+- Google
+- NVIDIA
 
-* Apple (AAPL)
-* Microsoft (MSFT)
-* Alphabet / Google (GOOGL)
-* NVIDIA (NVDA)
-
-Data range:
-
-* 5 years daily prices
-* Moving averages (50 / 200)
-* Daily returns distribution
+Users can switch between **multi-company comparison mode** and **individual company analysis**.
 
 ---
 
-## Features
+## Key Features
 
-* Unified multi-company comparison chart
-* Single company analysis mode
-* 50-day and 200-day moving averages
-* Histogram of daily returns
-* Real Yahoo Finance data
-* Synchronized time axis
-* High-contrast dark UI
-* Company logos and metadata
-* Stable API backend
-* No external database required
+### Unified Market View
+
+The unified view allows users to compare the **historical price performance** of multiple companies simultaneously.
+
+Features include:
+
+- 5-year historical stock price data
+- Multi-line chart comparison
+- Dark-themed financial dashboard UI
+- Real-time data loading
 
 ---
 
-## Architecture
+### Single Company Analysis
 
-```
-Frontend (HTML / JS / Chart.js)
-        |
-        | fetch /api/stocks
-        |
-Flask Backend (Python)
-        |
-        | yfinance
-        |
-Yahoo Finance Data
-```
+Users can select an individual company to view deeper analysis.
+
+Additional indicators include:
+
+- Price trend visualization
+- 50-day moving average
+- 200-day moving average
+- Interactive chart navigation
+
+---
+
+### Return Distribution Analysis
+
+The system calculates **daily percentage returns** and displays them in a histogram.
+
+This helps visualize:
+
+- volatility
+- distribution of daily returns
+- frequency of gains and losses
+
+---
+
+### Dynamic Sidebar
+
+The sidebar displays tracked companies with:
+
+- official company logos
+- total return over the selected time period
+- color-coded performance indicators
+
+Positive returns are highlighted in green, while negative returns appear in red.
+
+---
+
+## Technology Stack
 
 ### Backend
 
-* Flask API
-* pandas data alignment
-* rolling moving averages
-* return calculation
-* JSON API
+- Python
+- Flask
+- Pandas
+- NumPy
+- yfinance
 
 ### Frontend
 
-* Chart.js rendering
-* dynamic dataset switching
-* unified / single mode
-* histogram generation
-* dark terminal UI
+- HTML5
+- CSS3
+- JavaScript
+- Chart.js
+
+### Data Source
+
+Financial data is retrieved through the **yfinance API**, which provides historical market information.
 
 ---
 
-## AI Usage
-
-The frontend layer of this project was developed with extensive assistance from AI.
-
-AI was used for:
-
-* UI layout generation
-* Chart.js configuration
-* JavaScript state logic
-* histogram binning logic
-* dark theme styling
-* error fixing and debugging
-* API integration adjustments
-* refactoring for stability
-
-AI was not used to generate data or backend logic blindly.
-All financial calculations, alignment, and API structure were manually verified.
-
-The goal of using AI was to accelerate UI development while keeping the system technically correct.
-
-This workflow reflects modern engineering practice where AI assists with implementation while design decisions remain human-driven.
+## Project Structure
 
 ---
 
-## Installation
+## How the System Works
 
-Python 3.10+
-
-Install dependencies:
-
-```
-pip install flask pandas yfinance flask-cors
-```
-
-Project structure:
-
-```
-tech-tracker/
-  backend/
-  frontend/
-```
-
-Run backend:
-
-```
-cd backend
-python app.py
-```
-
-Run frontend:
-
-```
-cd frontend
-python -m http.server 8080
-```
-
-Open:
-
-```
-http://localhost:8080
-```
+1. The Flask backend requests stock market data using the yfinance API.
+2. Historical price data for selected companies is downloaded.
+3. The backend calculates:
+   - moving averages
+   - daily percentage returns
+4. The processed data is returned as JSON through an API endpoint.
+5. The frontend uses Chart.js to generate dynamic financial charts.
 
 ---
 
-## Usage
+## API Endpoint
 
-* Click a company to view individual chart
-* Click Unified Chart to compare all companies
-* Histogram updates automatically
-* Moving averages always aligned
-* Charts use the same timeline
+### `/api/stocks`
 
----
+Returns processed stock market data including:
 
-## Design Goals
+- price history
+- moving averages
+- daily returns
+- company metadata
 
-* minimal UI noise
-* accurate data
-* stable rendering
-* reproducible results
-* no hidden state
-* no external services except Yahoo Finance
+Example response structure:
+
+
 
 ---
 
-## Notes
+## Example Analytics Provided
 
-This project is intended for:
+The dashboard computes several financial metrics:
 
-* learning financial visualization
-* experimenting with Chart.js
-* practicing Flask APIs
-* demonstrating frontend AI-assisted development
-* portfolio / GitHub projects
+### Moving Averages
 
-This is not a trading tool.
+- 50-day moving average
+- 200-day moving average
 
+These indicators help identify **trend direction and potential momentum changes**.
+
+---
+
+### Daily Returns
+
+     Daily returns are calculated using:
+      return = (current_price - previous_price) / previous_price
+
+This metric is used to build the **return distribution histogram**.
+
+---
+
+## Learning Objectives
+
+This project demonstrates concepts from several technical areas:
+
+- backend API design with Flask
+- financial data processing with Pandas
+- interactive data visualization
+- frontend-backend integration
+- time-series data analysis
+
+---
+
+## Possible Future Improvements
+
+Potential enhancements for the project include:
+
+- additional companies and sectors
+- candlestick charts
+- volatility indicators
+- portfolio tracking
+- real-time streaming data
+- financial ratio analysis
+- machine learning based price forecasting
+
+---
+
+## Author
+    Eamon  
 ---
 
 ## License
