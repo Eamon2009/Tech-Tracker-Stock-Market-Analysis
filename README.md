@@ -1,5 +1,7 @@
 # Tech Tracker — Stock Market Analysis Dashboard
 
+<img width="1919" height="709" alt="Screenshot 2026-03-15 195155" src="https://github.com/user-attachments/assets/36c1501d-10d7-4780-a12a-9c9b36d423da" />
+
 
 Tech Tracker is a lightweight financial analytics dashboard built with **Python, Flask, and Chart.js**.  
 It fetches real market data and provides **interactive visualizations for major technology companies**, enabling users to analyze price trends, moving averages, and return distributions.
