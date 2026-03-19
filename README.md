@@ -101,9 +101,6 @@ Positive returns are highlighted in green, while negative returns appear in red.
 
 Financial data is retrieved through the **yfinance API**, which provides historical market information.
 
----
-
-## Project Structure
 
 ---
 
